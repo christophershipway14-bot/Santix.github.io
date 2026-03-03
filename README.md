@@ -1,3 +1,3 @@
-# Santix
-Santix is a start up tech business that is focused on anything scientific.
+# Sanrtix
+Santrix is a start up tech business that is focused on anything scientific.
 
