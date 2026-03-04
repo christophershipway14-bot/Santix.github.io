@@ -1,1 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Santrix - All-in-One</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;}
+body{
+  min-height:100vh;color:white;overflow-x:hidden;
+  background:#000;
+}
+/* Animated Earth Background */
+body::before{
+  content:"";position:fixed;top:0;left:0;width:100%;height:100%;
+  background:url("https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?q=80&w=1920") no-repeat center/cover;
+  z-index:-2;animation:earthMove 60s linear infinite;
+}
+body::after{
+  content:"";position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.65);z-index:-1;
+}
+@keyframes earthMove{0%{transform:scale(1.1);}50%{transform:scale(1.15) translateY(-20px);}100%{transform:scale(1.1);}}
+header{padding:20px;text-align:center;background:rgba(255,255,255,0.05);backdrop-filter:blur(10px);}
+nav a{color:white;margin:0 15px;text-decoration:none;}
+section{padding:60px 20px;text-align:center;}
+.products{display:flex;flex-wrap:wrap;gap:20px;justify-content:center;}
+.product{background:rgba(255,255,255,0.08);backdrop-filter:blur(10px);padding:20px;border-radius:12px;width:250px;}
+button{padding:10px 18px;background:#00d1b2;border:none;border-radius:6px;color:white;cursor:pointer;margin:5px;}
+input{padding:10px;border-radius:6px;border:none;margin:5px;}
+.hidden{display:none;}
+</style>
+</head>
+<body>
 
+<header>
+<h1>Santrix</h1>
+<nav>
+<a href="#" onclick="showSection('login')">Login / Admin</a>
+<a href="#" onclick="showSection('store')">Store</a>
+</nav>
+</header>
+
+<!-- LOGIN / ADMIN SECTION -->
+<section id="login" class="">
+<div id="login-box">
+<h2>Login</h2>
+<input type="text" id="email" placeholder="Email"><br>
+<input type="password" id="password" placeholder="Password"><br>
+<button onclick="login()">Login</button>
+<button onclick="signup()">Sign Up</button>
+</div>
+</section>
+
+<!-- STORE SECTION -->
+<section id="store" class="hidden">
+<h2>Santrix Store</h2>
+<div class="products" id="product-list"></div>
+<div id="admin-controls" class="hidden">
+<h3>Admin Dashboard</h3>
+<input type="text" id="prodName" placeholder="Product Name">
+<input type="number" id="prodPrice" placeholder="Price">
+<button onclick="addProduct()">Add Product</button>
+<div id="admin-products"></div>
+<button onclick="logout()">Logout</button>
+</div>
+</section>
+
+<script>
+// ------------------ STORAGE & STATE -------------------
+let products = JSON.parse(localStorage.getItem("santrix_products")) || [];
+let users = JSON.parse(localStorage.getItem("santrix_users")) || [];
+let currentUser = JSON.parse(localStorage.getItem("santrix_currentUser")) || null;
+
+// ------------------ SECTIONS -------------------
+function showSection(section){
+  document.getElementById("login").classList.add("hidden");
+  document.getElementById("store").classList.add("hidden");
+  if(section==="login") document.getElementById("login").classList.remove("hidden");
+  if(section==="store") {
+    document.getElementById("store").classList.remove("hidden");
+    renderProducts();
+  }
+}
+
+// ------------------ LOGIN & SIGNUP -------------------
+function signup(){
+  const email=document.getElementById("email").value;
+  const password=document.getElementById("password").value;
+  if(!email || !password){alert("Fill all fields"); return;}
+  if(users.find(u=>u.email===email)){alert("User exists"); return;}
+  let role = email==="admin" ? "admin":"user";
+  users.push({email,password,role});
+  localStorage.setItem("santrix_users",JSON.stringify(users));
+  alert("Signup success");
+}
+
+function login(){
+  const email=document.getElementById("email").value;
+  const password=document.getElementById("password").value;
+  const user = users.find(u=>u.email===email && u.password===password);
+  if(!user){alert("Login failed"); return;}
+  currentUser=user; localStorage.setItem("santrix_currentUser",JSON.stringify(user));
+  showSection("store");
+  if(user.role==="admin") document.getElementById("admin-controls").classList.remove("hidden");
+  else document.getElementById("admin-controls").classList.add("hidden");
+}
+
+// ------------------ LOGOUT -------------------
+function logout(){
+  currentUser=null;
+  localStorage.removeItem("santrix_currentUser");
+  showSection("login");
+}
+
+// ------------------ PRODUCTS -------------------
+function renderProducts(){
+  const list=document.getElementById("product-list");
+  list.innerHTML="";
+  products.forEach((p,index)=>{
+    list.innerHTML+=`<div class="product"><h3>${p.name}</h3><p>£${p.price}</p></div>`;
+  });
+  // Admin product list
+  if(currentUser && currentUser.role==="admin"){
+    const adminList=document.getElementById("admin-products");
+    adminList.innerHTML="";
+    products.forEach((p,i)=>{
+      adminList.innerHTML+=`<div class="product">${p.name} - £${p.price} <button onclick="removeProduct(${i})">Remove</button></div>`;
+    });
+  }
+}
+
+function addProduct(){
+  const name=document.getElementById("prodName").value;
+  const price=document.getElementById("prodPrice").value;
+  if(!name || !price){alert("Fill fields");return;}
+  products.push({name,price});
+  localStorage.setItem("santrix_products",JSON.stringify(products));
+  document.getElementById("prodName").value="";
+  document.getElementById("prodPrice").value="";
+  renderProducts();
+}
+
+function removeProduct(index){
+  products.splice(index,1);
+  localStorage.setItem("santrix_products",JSON.stringify(products));
+  renderProducts();
+}
+
+// ------------------ INIT -------------------
+if(currentUser){ showSection("store"); if(currentUser.role==="admin") document.getElementById("admin-controls").classList.remove("hidden"); }
+else showSection("login");
+</script>
+</body>
+</html>
